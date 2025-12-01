@@ -32,9 +32,7 @@ jobs:
 
       - name: Download Apache Arrow's util_free_space.sh
         run: |
-          curl -L -o util_free_space.sh https://raw.githubusercontent.com/apache/arrow/main/ci/scripts/util_free_space.sh
-          chmod +x util_free_space.sh
-          ./util_free_space.sh
+          curl -Ls https://raw.githubusercontent.com/apache/arrow/main/ci/scripts/util_free_space.sh | bash
 
       - name: Check Disk Space After Cleanup
         run: |
@@ -82,6 +80,9 @@ jobs:
 
           git clone https://github.com/WildKernels/AnyKernel3.git -b "$ANYKERNEL_BRANCH"
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "$SUSFS_BRANCH"
+          cd susfs4ksu
+          git checkout 8a76ba240d1f7315352b49d97d854a4b166e5b47
+          cd ..
           git clone https://github.com/WildKernels/kernel_patches.git
 
       - name: Clone Kernel Source
@@ -322,38 +323,6 @@ jobs:
           echo "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y" >> "${{ env.DEFCONFIG }}"
           echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> "${{ env.DEFCONFIG }}"
 
-      - name: Configure Sound 1
-        if: false
-        run: |
-          cd "$CONFIG"
-          # Sound Configuration
-          echo "# Sound Configuration" >> "${{ env.DEFCONFIG }}"
-          echo "CONFIG_SND=y" >> "${{ env.DEFCONFIG }}"
-          echo "CONFIG_SND_DRIVERS=y" >> "${{ env.DEFCONFIG }}"
-          echo "CONFIG_SND_PCM=y" >> "${{ env.DEFCONFIG }}"
-          echo "CONFIG_SND_TIMER=y" >> "${{ env.DEFCONFIG }}"
-          echo "CONFIG_SND_DYNAMIC_MINORS=y" >> "${{ env.DEFCONFIG }}"
-          echo "CONFIG_SND_PROC_FS=y" >> "${{ env.DEFCONFIG }}"
-          echo "CONFIG_SND_ALOOP=m" >> "${{ env.DEFCONFIG }}"
-
-          # Add snd-aloop.ko to modules list
-          #if [ -f "build/build.sh" ]; then
-          #  echo "sound/drivers/snd-aloop.ko" >> common/android/gki_aarch64_modules
-          #else
-          #  sed -i '/_COMMON_GKI_MODULES_LIST = \\[/,/\\]/ s/\\]/    "sound\/drivers\/snd-aloop.ko",\\n&/' common/modules.bzl
-          #fi
-
-          # Add symbols to abi_gki_aarch64
-          #SYMBOL_LIST=common/android/abi_gki_aarch64
-          #cat Wild_KSU/kernel/export_symbol.txt | awk '{sub("[ \t]+","");print "  "$0}' >> $SYMBOL_LIST
-
-      - name: Configure Sound 2
-        if: false
-        run: |
-          cd "$CONFIG"
-          cp ../kernel_patches/wild/bypass_patches/abi_bypass_gki.patch ./
-          patch -p1 < abi_bypass_gki.patch || true
-
       - name: Configure Build Optimization
         run: |
           cd "$CONFIG"
@@ -371,7 +340,7 @@ jobs:
 
           perl -pi -e 's/-dirty//' ./common/scripts/setlocalversion
           #Set Kernel Timestamp
-          perl -pi -e 's{UTS_VERSION="\$\(echo \$UTS_VERSION \$CONFIG_FLAGS \$TIMESTAMP \| cut -b -\$UTS_LEN\)"}{UTS_VERSION="#1 SMP PREEMPT Sun Apr 20 04:20:00 UTC 2025"}' ./common/scripts/mkcompile_h
+          perl -pi -e 's{UTS_VERSION="\$\(echo \$UTS_VERSION \$CONFIG_FLAGS \$TIMESTAMP \| cut -b -\$UTS_LEN\)"}{UTS_VERSION="#1 SMP PREEMPT \$(date -u +%a\ %b\ %d\ %H:%M:%S\ UTC\ %Y)"}' ./common/scripts/mkcompile_h
 
           #Set Kernel Name for Nothing Phone Android 12 5.10 (make build)
           perl -0777 -pi -e 's/(echo "\$res")(?!.*echo "\$res")/echo "\-android12-Wild"/s' ./common/scripts/setlocalversion
@@ -454,15 +423,6 @@ jobs:
           fi
           if scan_modules "./$CONFIG/out/12-5.10.$SUBLEVEL/dist"; then
             total_modules=$((total_modules + $?))
-          fi
-
-          # Look for snd-aloop.ko specifically
-          echo "Searching specifically for snd-aloop.ko..."
-          snd_aloop_found=$(find ./$CONFIG -name "snd-aloop.ko" -type f 2>/dev/null | head -1)
-          if [ -n "$snd_aloop_found" ]; then
-            echo "Found snd-aloop.ko at: $snd_aloop_found"
-          else
-            echo "snd-aloop.ko not found"
           fi
 
           echo "Total kernel modules found: $total_modules"
