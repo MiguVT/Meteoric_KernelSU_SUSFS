@@ -84,13 +84,6 @@ jobs:
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "$SUSFS_BRANCH"
           git clone https://github.com/WildKernels/kernel_patches.git
 
-          # Checkout specific commits for SUSFS v1.5.9 if enabled
-          if [ "${{ matrix.apply_susfs_v1_5_9 }}" = "v1.5.9" ]; then
-            cd susfs4ksu
-            git checkout 6f42c0e24e35a6fa0fc43051a5f1e7dfe568e8c2
-            cd ..
-          fi
-
       - name: Clone Kernel Source
         run: |
           mkdir -p "$CONFIG"
@@ -329,7 +322,7 @@ jobs:
           echo "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y" >> "${{ env.DEFCONFIG }}"
           echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> "${{ env.DEFCONFIG }}"
 
-      - name: Configure Sound
+      - name: Configure Sound 1
         if: false
         run: |
           cd "$CONFIG"
@@ -344,15 +337,22 @@ jobs:
           echo "CONFIG_SND_ALOOP=m" >> "${{ env.DEFCONFIG }}"
 
           # Add snd-aloop.ko to modules list
-          if [ -f "build/build.sh" ]; then
-            echo "sound/drivers/snd-aloop.ko" >> common/android/gki_aarch64_modules
-          else
-            sed -i '/_COMMON_GKI_MODULES_LIST = \\[/,/\\]/ s/\\]/    "sound\/drivers\/snd-aloop.ko",\\n&/' common/modules.bzl
-          fi
+          #if [ -f "build/build.sh" ]; then
+          #  echo "sound/drivers/snd-aloop.ko" >> common/android/gki_aarch64_modules
+          #else
+          #  sed -i '/_COMMON_GKI_MODULES_LIST = \\[/,/\\]/ s/\\]/    "sound\/drivers\/snd-aloop.ko",\\n&/' common/modules.bzl
+          #fi
 
           # Add symbols to abi_gki_aarch64
-          SYMBOL_LIST=common/android/abi_gki_aarch64
-          cat Wild_KSU/kernel/export_symbol.txt | awk '{sub("[ \t]+","");print "  "$0}' >> $SYMBOL_LIST
+          #SYMBOL_LIST=common/android/abi_gki_aarch64
+          #cat Wild_KSU/kernel/export_symbol.txt | awk '{sub("[ \t]+","");print "  "$0}' >> $SYMBOL_LIST
+
+      - name: Configure Sound 2
+        if: false
+        run: |
+          cd "$CONFIG"
+          cp ../kernel_patches/wild/bypass_patches/abi_bypass_gki.patch ./
+          patch -p1 < abi_bypass_gki.patch || true
 
       - name: Configure Build Optimization
         run: |
