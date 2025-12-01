@@ -338,15 +338,20 @@ jobs:
         run: |
           cd "$CONFIG"
 
-          perl -pi -e 's/-dirty//' ./common/scripts/setlocalversion
-          #Set Kernel Timestamp
-          perl -pi -e 's{UTS_VERSION="\$\(echo \$UTS_VERSION \$CONFIG_FLAGS \$TIMESTAMP \| cut -b -\$UTS_LEN\)"}{UTS_VERSION="#1 SMP PREEMPT \$(date -u +%a\ %b\ %d\ %H:%M:%S\ UTC\ %Y)"}' ./common/scripts/mkcompile_h
+          # Generate consistent build timestamp once
+          BUILD_TIMESTAMP=$(date -u +"%a %b %d %H:%M:%S UTC %Y")
+          echo "Build timestamp: $BUILD_TIMESTAMP"
 
+          perl -pi -e 's/-dirty//' ./common/scripts/setlocalversion
+          
           #Set Kernel Name for Nothing Phone Android 12 5.10 (make build)
           perl -0777 -pi -e 's/(echo "\$res")(?!.*echo "\$res")/echo "\-android12-Wild"/s' ./common/scripts/setlocalversion
 
-          #Set Kernel Timestamp
-          perl -pi -e 's/build-timestamp = \$\(or \$\(KBUILD_BUILD_TIMESTAMP\), \$\(build-timestamp-auto\)\)/build-timestamp = "Sun Apr 20 04:20:00 UTC 2025"/' ./common/init/Makefile
+          #Set UTS_VERSION with the consistent build timestamp
+          perl -pi -e "s{UTS_VERSION=\"\\\$\(echo \\\$UTS_VERSION \\\$CONFIG_FLAGS \\\$TIMESTAMP \| cut -b -\\\$UTS_LEN\)\"}{UTS_VERSION=\"#1 SMP PREEMPT $BUILD_TIMESTAMP\"}" ./common/scripts/mkcompile_h
+
+          #Set build-timestamp with the same consistent timestamp
+          perl -pi -e "s/build-timestamp = \\\$\(or \\\$\(KBUILD_BUILD_TIMESTAMP\), \\\$\(build-timestamp-auto\)\)/build-timestamp = \"$BUILD_TIMESTAMP\"/" ./common/init/Makefile
 
       - name: Setup Clang Compiler
         run: |
