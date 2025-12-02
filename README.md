@@ -4,7 +4,10 @@
 
 [![KernelSU](https://img.shields.io/badge/KernelSU-Supported-green)](https://kernelsu.org/)
 [![SUSFS](https://img.shields.io/badge/SUSFS-Integrated-orange)](https://gitlab.com/simonpunk/susfs4ksu)
-[![Meteoric](https://img.shields.io/badge/Meteoric-Kernel-purple)](https://github.com/MiguVT/kernel_nothing_sm8475_github_actions)
+[![Meteoric](https://img.shields.io/badge/Meteoric-Kernel-purple)](https://github.com/MiguVT/kernel_nothing_sm8475_github_actions/tree/clean)
+
+> Note that this code is not made by me, I only adapted it for the Meteoric Kernel, all credits go to the [original authors](https://github.com/WildKernels/GKI_KernelSU_SUSFS), also the code is originally a little messy and not well-documented, I tried to clean it up and rewrite some parts, also removed unnecessary code and improved overall structure, but a messy codebase is still a messy codebase (I rewrited some parts but still messy), Pull Requests are more than welcome!
+> The Meteoric Kernel was cleaned by me (Original had hardcoded KSU and SUSFS integration)
 
 </div>
 
